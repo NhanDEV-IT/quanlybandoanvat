@@ -31,17 +31,19 @@ app.use('/uploads', express.static('uploads'));
 app.use(cookieParser());
 
 // Cấu hình Session
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: true,
-    saveUninitialized: true,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24 // 24 hours
-    }
-}));
+app.set('trust proxy', 1); // ⚠️ Quan trọng
 
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'none', // ⚠️ Cho phép frontend nhận cookie
+    maxAge: 1000 * 60 * 60 * 24 // 24 hours
+  }
+}));
 // Parse request body
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
