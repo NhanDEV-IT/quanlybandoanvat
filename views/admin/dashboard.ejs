@@ -1,0 +1,179 @@
+<%- include('../partials/header') %>
+
+<div class="container py-4">
+    <h2 class="mb-4">Dashboard</h2>
+
+    <!-- Thống kê tổng quan -->
+    <div class="row mb-4">
+        <!-- Tổng sản phẩm -->
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0">Tổng sản phẩm</h6>
+                        <h2 class="mt-2 mb-0"><%= totalProducts || 0 %></h2>
+                    </div>
+                    <i class="fas fa-box fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng đơn hàng -->
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0">Tổng đơn hàng</h6>
+                        <h2 class="mt-2 mb-0"><%= totalOrders || 0 %></h2>
+                    </div>
+                    <i class="fas fa-shopping-cart fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng người dùng -->
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0">Tổng người dùng</h6>
+                        <h2 class="mt-2 mb-0"><%= totalUsers || 0 %></h2>
+                    </div>
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng doanh thu -->
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0">Tổng doanh thu</h6>
+                        <h2 class="mt-2 mb-0"><%= (totalRevenue || 0).toLocaleString('vi-VN') %> đ</h2>
+                    </div>
+                    <i class="fas fa-money-bill-wave fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sản phẩm bán chạy -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Sản phẩm bán chạy</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Danh mục</th>
+                                    <th>Giá</th>
+                                    <th>Đã bán</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (topProducts && topProducts.length > 0) { %>
+                                    <% topProducts.forEach(product => { %>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="<%= product.image %>" 
+                                                         alt="<%= product.name %>" 
+                                                         class="img-thumbnail me-2"
+                                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                                    <span><%= product.name %></span>
+                                                </div>
+                                            </td>
+                                            <td><%= product.category ? product.category.name : 'Không có danh mục' %></td>
+                                            <td><%= product.price.toLocaleString('vi-VN') %> đ</td>
+                                            <td><%= product.orderCount || 0 %></td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="text-center">Chưa có sản phẩm nào</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Đơn hàng gần đây -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Đơn hàng gần đây</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Khách hàng</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (recentOrders && recentOrders.length > 0) { %>
+                                    <% recentOrders.forEach(order => { %>
+                                        <tr>
+                                            <td><%= order && order._id ? order._id.toString().slice(-6).toUpperCase() : 'N/A' %></td>
+                                            <td>
+                                                <% if (order.user && order.user.username) { %>
+                                                    <%= order.user.username %>
+                                                <% } else if (order.customerName) { %>
+                                                    <%= order.customerName %>
+                                                <% } else { %>
+                                                    Khách vãng lai
+                                                <% } %>
+                                            </td>
+                                            <td><%= ((order && order.totalAmount) || 0).toLocaleString('vi-VN') %> đ</td>
+                                            <td>
+                                                <% 
+                                                    let status = order ? order.status : 'pending';
+                                                    let statusText = {
+                                                        'pending': 'Chờ xử lý',
+                                                        'processing': 'Đang xử lý',
+                                                        'shipping': 'Đang giao',
+                                                        'completed': 'Hoàn thành',
+                                                        'cancelled': 'Đã hủy'
+                                                    };
+                                                    let statusClass = {
+                                                        'pending': 'warning',
+                                                        'processing': 'info',
+                                                        'shipping': 'primary',
+                                                        'completed': 'success',
+                                                        'cancelled': 'danger'
+                                                    };
+                                                %>
+                                                <span class="badge bg-<%= statusClass[status] %>">
+                                                    <%= statusText[status] %>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="text-center">Chưa có đơn hàng nào</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %> 

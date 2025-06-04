@@ -1,0 +1,175 @@
+<%- include('../partials/header') %>
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Thông tin đặt hàng</h2>
+                    <form action="/orders/create" method="POST" id="orderForm">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="mb-3">
+                            <label for="customerName" class="form-label">Tên khách hàng <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="customerName" name="customerName" 
+                                   value="<%= user ? user.username : '' %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="phoneNumber" class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" 
+                                   value="<%= user ? user.phone : '' %>"
+                                   required pattern="[0-9]{10}" title="Vui lòng nhập số điện thoại 10 số">
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="address" name="address" rows="3" required><%= user ? user.address : '' %></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="note" class="form-label">Ghi chú</label>
+                            <textarea class="form-control" id="note" name="note" rows="2"></textarea>
+                        </div>
+
+                        <input type="hidden" name="items" id="orderItems">
+                        <input type="hidden" name="totalAmount" id="orderTotal">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="/cart" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Quay lại giỏ hàng
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitOrder">
+                                <i class="fas fa-check"></i> Xác nhận đặt hàng
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Chi tiết đơn hàng</h5>
+                    <div id="orderItems-preview">
+                        <!-- Danh sách sản phẩm sẽ được thêm vào đây bằng JavaScript -->
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tạm tính:</span>
+                        <strong id="subtotal">0 đ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Tổng cộng:</span>
+                        <strong id="total" class="text-primary h5 mb-0">0 đ</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="order-item-template">
+    <div class="order-item mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="product-name mb-0"></h6>
+                <small class="text-muted">
+                    <span class="price"></span> × <span class="quantity"></span>
+                </small>
+            </div>
+            <strong class="item-total"></strong>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orderItemsPreview = document.getElementById('orderItems-preview');
+    const subtotalElement = document.getElementById('subtotal');
+    const totalElement = document.getElementById('total');
+    const template = document.getElementById('order-item-template');
+    const orderForm = document.getElementById('orderForm');
+    
+    function loadOrderPreview() {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        if (cart.length === 0) {
+            window.location.href = '/cart';
+            return;
+        }
+        
+        orderItemsPreview.innerHTML = '';
+        let total = 0;
+        
+        cart.forEach(item => {
+            const clone = template.content.cloneNode(true);
+            const orderItem = clone.querySelector('.order-item');
+            
+            orderItem.querySelector('.product-name').textContent = item.name;
+            orderItem.querySelector('.price').textContent = formatPrice(item.price);
+            orderItem.querySelector('.quantity').textContent = item.quantity;
+            orderItem.querySelector('.item-total').textContent = 
+                formatPrice(item.price * item.quantity);
+            
+            total += item.price * item.quantity;
+            orderItemsPreview.appendChild(clone);
+        });
+        
+        subtotalElement.textContent = formatPrice(total);
+        totalElement.textContent = formatPrice(total);
+        
+        // Cập nhật hidden inputs
+        document.getElementById('orderItems').value = JSON.stringify(cart);
+        document.getElementById('orderTotal').value = total;
+    }
+    
+    function formatPrice(price) {
+        return price.toLocaleString('vi-VN') + ' đ';
+    }
+    
+    orderForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Kiểm tra giỏ hàng
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        if (cart.length === 0) {
+            alert('Giỏ hàng của bạn đang trống!');
+            window.location.href = '/cart';
+            return;
+        }
+        
+        try {
+            // Submit form
+            const response = await fetch('/orders/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'CSRF-Token': '<%= csrfToken %>'
+                },
+                body: JSON.stringify({
+                    _csrf: '<%= csrfToken %>',
+                    customerName: document.getElementById('customerName').value,
+                    phoneNumber: document.getElementById('phoneNumber').value,
+                    address: document.getElementById('address').value,
+                    note: document.getElementById('note').value,
+                    items: cart
+                })
+            });
+
+            if (response.ok) {
+                // Xóa giỏ hàng sau khi đặt hàng thành công
+                localStorage.removeItem('cart');
+                window.location.href = '/orders/success';
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Có lỗi xảy ra khi đặt hàng');
+            }
+        } catch (error) {
+            console.error('Lỗi khi đặt hàng:', error);
+            alert('Có lỗi xảy ra khi đặt hàng');
+        }
+    });
+    
+    // Load preview khi trang được tải
+    loadOrderPreview();
+});
+</script>
+
+<%- include('../partials/footer') %> 

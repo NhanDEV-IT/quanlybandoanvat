@@ -1,0 +1,161 @@
+<%- include('../../partials/header') %>
+
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="card-title m-0">Quản lý danh mục</h2>
+                <a href="/admin/categories/create" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Thêm danh mục mới
+                </a>
+            </div>
+
+            <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <%= success_msg %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+
+            <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= error_msg %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên danh mục</th>
+                            <th>Mô tả</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (categories && categories.length > 0) { %>
+                            <% categories.forEach(category => { %>
+                                <tr>
+                                    <td><%= category.name %></td>
+                                    <td><%= category.description || 'Không có mô tả' %></td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="/admin/categories/<%= category._id %>/edit" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteCategory('<%= category._id %>')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="3" class="text-center">Không có danh mục nào</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa danh mục này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let categoryIdToDelete = null;
+const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+function deleteCategory(categoryId) {
+    categoryIdToDelete = categoryId;
+    modal.show();
+}
+
+function confirmDelete() {
+    if (!categoryIdToDelete) return;
+
+    const params = new URLSearchParams();
+    params.append('_method', 'DELETE');
+    params.append('_csrf', '<%= csrfToken %>');
+
+    fetch(`/admin/categories/${categoryIdToDelete}`, {
+        method: 'POST',
+        body: params,
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'CSRF-Token': '<%= csrfToken %>'
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Error parsing response:', text);
+                throw new Error('Server response was not in JSON format');
+            }
+        });
+    })
+    .then(data => {
+        console.log('Success:', data);
+        if (!data.success && data.error) {
+            throw new Error(data.error);
+        }
+        // Hiển thị thông báo thành công
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            ${data.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('.table-responsive'));
+        
+        // Reload sau 1 giây
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Hiển thị thông báo lỗi
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            ${error.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('.table-responsive'));
+    })
+    .finally(() => {
+        modal.hide();
+        categoryIdToDelete = null;
+    });
+}
+</script>
+
+<%- include('../../partials/footer') %> 

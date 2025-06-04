@@ -1,0 +1,29 @@
+<%- include('partials/header') %>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h1 class="display-1 text-muted">404</h1>
+                    <h2 class="mb-4">Không tìm thấy trang</h2>
+                    <p class="lead mb-4">
+                        Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.
+                        <br>
+                        URL: <code><%= url %></code>
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="javascript:history.back()" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Quay lại
+                        </a>
+                        <a href="/" class="btn btn-secondary">
+                            <i class="fas fa-home me-2"></i>Trang chủ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %> 

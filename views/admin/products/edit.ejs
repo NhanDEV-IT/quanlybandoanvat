@@ -1,0 +1,252 @@
+<%- include('../../partials/header') %>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Chỉnh sửa sản phẩm</h2>
+
+                    <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <%= success_msg %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+
+                    <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= error_msg %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+                    
+                    <form method="POST" 
+                          enctype="multipart/form-data"
+                          id="updateProductForm"
+                          class="needs-validation" 
+                          novalidate>
+                        
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="_method" value="PUT">
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control <%= errors.name ? 'is-invalid' : '' %>" 
+                                   id="name" 
+                                   name="name" 
+                                   value="<%= product.name %>" 
+                                   required
+                                   minlength="2">
+                            <% if (errors.name) { %>
+                                <div class="invalid-feedback"><%= errors.name %></div>
+                            <% } %>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Mô tả <span class="text-danger">*</span></label>
+                            <textarea class="form-control <%= errors.description ? 'is-invalid' : '' %>" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="3" 
+                                      required><%= product.description %></textarea>
+                            <% if (errors.description) { %>
+                                <div class="invalid-feedback"><%= errors.description %></div>
+                            <% } %>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Danh mục <span class="text-danger">*</span></label>
+                            <select class="form-select <%= errors.category ? 'is-invalid' : '' %>" 
+                                    id="category" 
+                                    name="category" 
+                                    required>
+                                <option value="">Chọn danh mục</option>
+                                <% categories.forEach(function(cat) { %>
+                                    <option value="<%= cat._id %>" 
+                                            <%= product.category && product.category._id && 
+                                                product.category._id.toString() === cat._id.toString() ? 'selected' : '' %>>
+                                        <%= cat.name %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                            <% if (errors.category) { %>
+                                <div class="invalid-feedback"><%= errors.category %></div>
+                            <% } %>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="price" class="form-label">Giá (VNĐ) <span class="text-danger">*</span></label>
+                                <input type="number" 
+                                       class="form-control <%= errors.price ? 'is-invalid' : '' %>" 
+                                       id="price" 
+                                       name="price" 
+                                       value="<%= product.price %>" 
+                                       min="0"
+                                       step="1000" 
+                                       required>
+                                <% if (errors.price) { %>
+                                    <div class="invalid-feedback"><%= errors.price %></div>
+                                <% } %>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="stock" class="form-label">Số lượng tồn kho <span class="text-danger">*</span></label>
+                                <input type="number" 
+                                       class="form-control <%= errors.stock ? 'is-invalid' : '' %>" 
+                                       id="stock" 
+                                       name="stock" 
+                                       value="<%= product.stock %>" 
+                                       min="0" 
+                                       required>
+                                <% if (errors.stock) { %>
+                                    <div class="invalid-feedback"><%= errors.stock %></div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="discount" class="form-label">Giảm giá (%)</label>
+                            <select class="form-select" id="discount" name="discount">
+                                <option value="0" <%= product.discount === 0 ? 'selected' : '' %>>Không giảm giá</option>
+                                <option value="10" <%= product.discount === 10 ? 'selected' : '' %>>10%</option>
+                                <option value="20" <%= product.discount === 20 ? 'selected' : '' %>>20%</option>
+                                <option value="30" <%= product.discount === 30 ? 'selected' : '' %>>30%</option>
+                                <option value="40" <%= product.discount === 40 ? 'selected' : '' %>>40%</option>
+                                <option value="50" <%= product.discount === 50 ? 'selected' : '' %>>50%</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Hình ảnh sản phẩm</label>
+                            <input type="file" 
+                                   class="form-control <%= errors.image ? 'is-invalid' : '' %>" 
+                                   id="image" 
+                                   name="image" 
+                                   accept="image/*">
+                            <div class="form-text">Để trống nếu không muốn thay đổi ảnh</div>
+                            <% if (errors.image) { %>
+                                <div class="invalid-feedback"><%= errors.image %></div>
+                            <% } %>
+                            <% if (product.image) { %>
+                                <div class="mt-2">
+                                    <img src="<%= product.image %>" 
+                                         alt="Current image" 
+                                         class="img-thumbnail" 
+                                         style="max-height: 200px">
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Lưu thay đổi
+                            </button>
+                            <a href="/admin/products" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Quay lại
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Example starter JavaScript for disabling form submissions if there are invalid fields
+(function () {
+    'use strict'
+
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    var forms = document.querySelectorAll('.needs-validation')
+
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+
+                form.classList.add('was-validated')
+            }, false)
+        })
+})()
+
+// Additional custom validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('updateProductForm');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        console.log('Form submission event triggered');
+        
+        // Get product ID from URL
+        const pathParts = window.location.pathname.split('/');
+        const productId = pathParts[pathParts.indexOf('products') + 1];
+        
+        console.log('Product ID:', productId);
+        console.log('Current path:', window.location.pathname);
+        console.log('CSRF Token:', document.querySelector('input[name="_csrf"]').value);
+        
+        // Create FormData
+        const formData = new FormData(this);
+        
+        // Log FormData contents for debugging
+        for (let pair of formData.entries()) {
+            if (pair[0] !== '_csrf') { // Don't log CSRF token
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+        }
+        
+        // Send request with correct admin URL
+        fetch(`/admin/products/${productId}`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: {
+                'CSRF-Token': formData.get('_csrf')
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Error response:', text);
+                    throw new Error(`Server responded with ${response.status}: ${text}`);
+                });
+            }
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            return response.json().catch(() => null); // Handle non-JSON responses
+        })
+        .then(data => {
+            if (data) {
+                console.log('Success:', data);
+            }
+            window.location.href = '/admin/products';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi cập nhật sản phẩm: ' + error.message);
+        });
+    });
+
+    // Log initial form state
+    console.log('Form initialized');
+    console.log('Action URL will be:', `/admin/products/${window.location.pathname.split('/')[3]}`);
+});
+
+// Log when page loads
+console.log('Edit page loaded');
+console.log('Current URL:', window.location.pathname);
+console.log('Form element:', document.getElementById('updateProductForm'));
+</script>
+
+<%- include('../../partials/footer') %> 

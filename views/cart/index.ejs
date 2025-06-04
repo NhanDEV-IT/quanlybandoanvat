@@ -1,0 +1,174 @@
+<%- include('../partials/header') %>
+
+<div class="container py-4">
+    <h2 class="mb-4">Giỏ hàng</h2>
+
+    <% if (!locals.user) { %>
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            Vui lòng <a href="/auth/login" class="alert-link">đăng nhập</a> để tiếp tục mua hàng.
+        </div>
+    <% } %>
+
+    <div id="cart-items">
+        <!-- Danh sách sản phẩm sẽ được thêm vào đây bằng JavaScript -->
+    </div>
+
+    <div class="card shadow-sm mb-4" id="cart-summary" style="display: none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <span>Tổng tiền:</span>
+                <strong id="cart-total" class="h4 mb-0">0 đ</strong>
+            </div>
+            <% if (locals.user) { %>
+                <a href="/orders/create" class="btn btn-primary w-100">
+                    <i class="fas fa-shopping-cart"></i> Tiến hành đặt hàng
+                </a>
+            <% } else { %>
+                <a href="/auth/login" class="btn btn-primary w-100">
+                    <i class="fas fa-sign-in-alt"></i> Đăng nhập để đặt hàng
+                </a>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="text-center" id="empty-cart" style="display: none;">
+        <p class="lead mt-3">Giỏ hàng của bạn đang trống</p>
+        <a href="/products" class="btn btn-primary">
+            <i class="fas fa-shopping-basket"></i> Tiếp tục mua sắm
+        </a>
+    </div>
+</div>
+
+<template id="cart-item-template">
+    <div class="card shadow-sm mb-3 cart-item">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    <div class="product-image-container" style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px;">
+                        <img src="" alt="" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="product-name mb-1"></h5>
+                    <p class="text-muted mb-0 product-price"></p>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <button class="btn btn-outline-secondary decrease-quantity" type="button">-</button>
+                        <input type="number" class="form-control text-center quantity-input" value="1" min="1">
+                        <button class="btn btn-outline-secondary increase-quantity" type="button">+</button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <strong class="item-total"></strong>
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-outline-danger remove-item">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cartItemsContainer = document.getElementById('cart-items');
+    const cartSummary = document.getElementById('cart-summary');
+    const emptyCart = document.getElementById('empty-cart');
+    const template = document.getElementById('cart-item-template');
+    const cartTotalElement = document.getElementById('cart-total');
+    
+    function loadCart() {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        cartItemsContainer.innerHTML = '';
+        
+        if (cart.length === 0) {
+            cartSummary.style.display = 'none';
+            emptyCart.style.display = 'block';
+            return;
+        }
+        
+        let total = 0;
+        cart.forEach((item, index) => {
+            const clone = template.content.cloneNode(true);
+            const cartItem = clone.querySelector('.cart-item');
+            
+            // Set product image with fallback
+            const imgElement = cartItem.querySelector('img');
+            imgElement.src = item.image || '/images/no-image.png';
+            imgElement.alt = item.name;
+            imgElement.onerror = function() {
+                this.src = '/images/no-image.png';
+            };
+            
+            cartItem.querySelector('.product-name').textContent = item.name;
+            cartItem.querySelector('.product-price').textContent = formatPrice(item.price);
+            cartItem.querySelector('.quantity-input').value = item.quantity;
+            cartItem.querySelector('.item-total').textContent = formatPrice(item.price * item.quantity);
+            
+            // Quantity controls
+            const quantityInput = cartItem.querySelector('.quantity-input');
+            const decreaseBtn = cartItem.querySelector('.decrease-quantity');
+            const increaseBtn = cartItem.querySelector('.increase-quantity');
+            
+            quantityInput.addEventListener('change', function() {
+                const value = parseInt(this.value) || 1;
+                if (value < 1) this.value = 1;
+                updateQuantity(index, parseInt(this.value));
+            });
+            
+            decreaseBtn.addEventListener('click', function() {
+                if (quantityInput.value > 1) {
+                    quantityInput.value = parseInt(quantityInput.value) - 1;
+                    updateQuantity(index, parseInt(quantityInput.value));
+                }
+            });
+            
+            increaseBtn.addEventListener('click', function() {
+                quantityInput.value = parseInt(quantityInput.value) + 1;
+                updateQuantity(index, parseInt(quantityInput.value));
+            });
+            
+            // Remove button
+            cartItem.querySelector('.remove-item').addEventListener('click', function() {
+                removeItem(index);
+            });
+            
+            total += item.price * item.quantity;
+            cartItemsContainer.appendChild(clone);
+        });
+        
+        cartTotalElement.textContent = formatPrice(total);
+        cartSummary.style.display = 'block';
+        emptyCart.style.display = 'none';
+    }
+    
+    function updateQuantity(index, newQuantity) {
+        if (newQuantity < 1) return;
+        
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        cart[index].quantity = newQuantity;
+        localStorage.setItem('cart', JSON.stringify(cart));
+        loadCart();
+    }
+    
+    function removeItem(index) {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        cart.splice(index, 1);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        loadCart();
+    }
+    
+    function formatPrice(price) {
+        return price.toLocaleString('vi-VN') + ' đ';
+    }
+    
+    // Load cart khi trang được tải
+    loadCart();
+});
+</script>
+
+<%- include('../partials/footer') %> 

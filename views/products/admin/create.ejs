@@ -1,0 +1,168 @@
+<%- include('../../partials/header') %>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Thêm sản phẩm mới</h2>
+                    
+                    <form action="/admin/products" 
+                          method="POST" 
+                          enctype="multipart/form-data"
+                          class="needs-validation" 
+                          novalidate>
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control <%= errors.name ? 'is-invalid' : '' %>" 
+                                   id="name" 
+                                   name="name" 
+                                   value="<%= product ? product.name : '' %>"
+                                   required
+                                   minlength="2">
+                            <div class="invalid-feedback">
+                                <%= errors.name || 'Tên sản phẩm phải có ít nhất 2 ký tự' %>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Mô tả <span class="text-danger">*</span></label>
+                            <textarea class="form-control <%= errors.description ? 'is-invalid' : '' %>" 
+                                    id="description" 
+                                    name="description" 
+                                    rows="3" 
+                                    required><%= product ? product.description : '' %></textarea>
+                            <div class="invalid-feedback">
+                                <%= errors.description || 'Vui lòng nhập mô tả sản phẩm' %>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Danh mục <span class="text-danger">*</span></label>
+                            <select class="form-select <%= errors.category ? 'is-invalid' : '' %>" 
+                                    id="category" 
+                                    name="category" 
+                                    required>
+                                <option value="">Chọn danh mục</option>
+                                <% categories.forEach(category => { %>
+                                    <option value="<%= category._id %>"
+                                            <%= product && product.category === category._id.toString() ? 'selected' : '' %>>
+                                        <%= category.name %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                            <div class="invalid-feedback">
+                                <%= errors.category || 'Vui lòng chọn danh mục' %>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Giá (VNĐ) <span class="text-danger">*</span></label>
+                            <input type="number" 
+                                   class="form-control <%= errors.price ? 'is-invalid' : '' %>" 
+                                   id="price" 
+                                   name="price" 
+                                   value="<%= product ? product.price : '' %>"
+                                   min="0" 
+                                   required>
+                            <div class="invalid-feedback">
+                                <%= errors.price || 'Giá không hợp lệ' %>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="stock" class="form-label">Tồn kho <span class="text-danger">*</span></label>
+                            <input type="number" 
+                                   class="form-control <%= errors.stock ? 'is-invalid' : '' %>" 
+                                   id="stock" 
+                                   name="stock" 
+                                   value="<%= product ? product.stock : '' %>"
+                                   min="0" 
+                                   required>
+                            <div class="invalid-feedback">
+                                <%= errors.stock || 'Số lượng tồn kho không hợp lệ' %>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="discount" class="form-label">Giảm giá (%)</label>
+                            <select class="form-select" id="discount" name="discount">
+                                <option value="0" <%= product && product.discount === 0 ? 'selected' : '' %>>Không giảm giá</option>
+                                <option value="5" <%= product && product.discount === 5 ? 'selected' : '' %>>5%</option>
+                                <option value="10" <%= product && product.discount === 10 ? 'selected' : '' %>>10%</option>
+                                <option value="15" <%= product && product.discount === 15 ? 'selected' : '' %>>15%</option>
+                                <option value="20" <%= product && product.discount === 20 ? 'selected' : '' %>>20%</option>
+                                <option value="25" <%= product && product.discount === 25 ? 'selected' : '' %>>25%</option>
+                                <option value="30" <%= product && product.discount === 30 ? 'selected' : '' %>>30%</option>
+                                <option value="35" <%= product && product.discount === 35 ? 'selected' : '' %>>35%</option>
+                                <option value="40" <%= product && product.discount === 40 ? 'selected' : '' %>>40%</option>
+                                <option value="45" <%= product && product.discount === 45 ? 'selected' : '' %>>45%</option>
+                                <option value="50" <%= product && product.discount === 50 ? 'selected' : '' %>>50%</option>
+                            </select>
+                            <div id="finalPricePreview" class="form-text mt-2">
+                                Giá sau giảm: <strong class="text-danger" id="finalPrice"></strong>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Hình ảnh</label>
+                            <input type="file" 
+                                   class="form-control <%= errors.image ? 'is-invalid' : '' %>" 
+                                   id="image" 
+                                   name="image" 
+                                   accept="image/*">
+                            <div class="form-text">
+                                Nếu không chọn ảnh, hệ thống sẽ sử dụng ảnh mặc định
+                            </div>
+                            <div class="invalid-feedback">
+                                <%= errors.image || 'File không hợp lệ' %>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="/admin/products" class="btn btn-secondary">Hủy</a>
+                            <button type="submit" class="btn btn-primary">Thêm sản phẩm</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
+// Hiển thị giá sau giảm giá
+function updateFinalPrice() {
+    const price = parseFloat(document.getElementById('price').value) || 0;
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const finalPrice = price * (1 - discount/100);
+    document.getElementById('finalPrice').textContent = finalPrice.toLocaleString('vi-VN') + ' đ';
+}
+
+// Cập nhật giá khi thay đổi giá hoặc giảm giá
+document.getElementById('price').addEventListener('input', updateFinalPrice);
+document.getElementById('discount').addEventListener('change', updateFinalPrice);
+
+// Cập nhật giá ban đầu
+updateFinalPrice();
+</script>
+
+<%- include('../../partials/footer') %> 

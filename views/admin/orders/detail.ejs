@@ -1,0 +1,116 @@
+<%- include('../../partials/header') %>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="card-title mb-0">Chi tiết đơn hàng</h2>
+                        <a href="/admin/orders" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Thông tin đơn hàng</h5>
+                            <p>
+                                <strong>Mã đơn:</strong> <%= order._id %><br>
+                                <strong>Ngày đặt:</strong> <%= new Date(order.createdAt).toLocaleString('vi-VN') %><br>
+                                <strong>Tổng tiền:</strong> <%= order.totalAmount.toLocaleString('vi-VN') %> đ<br>
+                                <strong>Trạng thái:</strong>
+                                <form action="/admin/orders/<%= order._id %>/status" method="POST" class="d-inline" id="updateStatusForm">
+                                    <input type="hidden" name="_method" value="PUT">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="console.log('Selected status:', this.value)">
+                                            <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>
+                                                Chờ xử lý
+                                            </option>
+                                            <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>
+                                                Đã xác nhận
+                                            </option>
+                                            <option value="shipping" <%= order.status === 'shipping' ? 'selected' : '' %>>
+                                                Đang giao hàng
+                                            </option>
+                                            <option value="completed" <%= order.status === 'completed' ? 'selected' : '' %>>
+                                                Đã giao hàng
+                                            </option>
+                                            <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>
+                                                Đã hủy
+                                            </option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary" onclick="console.log('Form submitted with status:', document.querySelector('#updateStatusForm select').value)">
+                                            <i class="fas fa-save"></i> Cập nhật
+                                        </button>
+                                    </div>
+                                </form>
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Thông tin khách hàng</h5>
+                            <p>
+                                <strong>Họ tên:</strong> <%= order.customerName %><br>
+                                <strong>Số điện thoại:</strong> <%= order.phoneNumber %><br>
+                                <strong>Địa chỉ:</strong> <%= order.address %><br>
+                                <% if (order.note) { %>
+                                    <strong>Ghi chú:</strong> <%= order.note %>
+                                <% } %>
+                            </p>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3">Chi tiết sản phẩm</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Giá</th>
+                                    <th>Số lượng</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% order.items.forEach(item => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <%= item.product.name %>
+                                                <% if (item.product.stock === 0) { %>
+                                                    <span class="badge bg-danger ms-2">Hết hàng</span>
+                                                <% } else if (item.product.stock < 5) { %>
+                                                    <span class="badge bg-warning ms-2">Còn <%= item.product.stock %> sản phẩm</span>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td><%= item.price.toLocaleString('vi-VN') %> đ</td>
+                                        <td><%= item.quantity %></td>
+                                        <td class="text-end"><%= (item.price * item.quantity).toLocaleString('vi-VN') %> đ</td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                                    <td class="text-end"><strong><%= order.totalAmount.toLocaleString('vi-VN') %> đ</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('updateStatusForm').addEventListener('submit', function(e) {
+    const status = this.querySelector('select[name="status"]').value;
+    console.log('Form submitting with status:', status);
+});
+</script>
+
+<%- include('../../partials/footer') %> 

@@ -1,0 +1,141 @@
+<%- include('../../partials/header') %>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Quản lý đơn hàng</h1>
+            </div>
+
+            <!-- Form lọc -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <select id="statusFilter" class="form-select">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="Đã giao hàng">Đã giao hàng</option>
+                                <option value="Chờ xử lý">Chờ xử lý</option>
+                                <option value="Đã hủy">Đã hủy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="date" id="dateFilter" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng dữ liệu -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table" id="ordersTable">
+                            <thead>
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Khách hàng</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (orders && orders.length > 0) { %>
+                                    <% orders.forEach(order => { %>
+                                        <tr>
+                                            <td><%= order._id %></td>
+                                            <td>
+                                                <%= order.customerName %>
+                                                <small class="text-muted d-block"><%= order.phoneNumber %></small>
+                                            </td>
+                                            <td><%= order.totalAmount.toLocaleString('vi-VN') %> đ</td>
+                                            <td>
+                                                <span class="badge <%= 
+                                                    order.status === 'completed' ? 'bg-success' : 
+                                                    order.status === 'pending' ? 'bg-warning' : 
+                                                    'bg-danger' %>">
+                                                    <%= 
+                                                        order.status === 'completed' ? 'Đã giao hàng' :
+                                                        order.status === 'pending' ? 'Chờ xử lý' :
+                                                        'Đã hủy' 
+                                                    %>
+                                                </span>
+                                            </td>
+                                            <td><%= new Date(order.createdAt).toLocaleDateString('vi-VN') %></td>
+                                            <td>
+                                                <a href="/admin/orders/<%= order._id %>" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-eye"></i> Chi tiết
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr id="noDataRow" style="display: none;">
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="text-muted">Không tìm thấy đơn hàng nào</div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('statusFilter');
+    const dateFilter = document.getElementById('dateFilter');
+    const table = document.getElementById('ordersTable');
+    const rows = table.getElementsByTagName('tr');
+    const noDataRow = document.getElementById('noDataRow');
+
+    function filterOrders() {
+        const selectedStatus = statusFilter.value;
+        const selectedDate = dateFilter.value ? new Date(dateFilter.value) : null;
+        let hasVisibleRows = false;
+
+        // Bỏ qua hàng đầu tiên (header)
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.id === 'noDataRow') continue;
+
+            const statusCell = row.cells[3].textContent.trim();
+            const dateCell = row.cells[4].textContent.trim();
+            let showRow = true;
+
+            // Lọc theo trạng thái
+            if (selectedStatus && statusCell.indexOf(selectedStatus) === -1) {
+                showRow = false;
+            }
+
+            // Lọc theo ngày
+            if (selectedDate) {
+                const rowDate = new Date(dateCell.split('/').reverse().join('-'));
+                if (rowDate.toDateString() !== selectedDate.toDateString()) {
+                    showRow = false;
+                }
+            }
+
+            row.style.display = showRow ? '' : 'none';
+            if (showRow) hasVisibleRows = true;
+        }
+
+        // Hiển thị thông báo không có dữ liệu nếu không có hàng nào hiển thị
+        if (noDataRow) {
+            noDataRow.style.display = hasVisibleRows ? 'none' : '';
+        }
+    }
+
+    // Thêm sự kiện lắng nghe cho các bộ lọc
+    statusFilter.addEventListener('change', filterOrders);
+    dateFilter.addEventListener('change', filterOrders);
+});
+</script>
+
+<%- include('../../partials/footer') %> 

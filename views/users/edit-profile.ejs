@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Chỉnh sửa thông tin</h2>
+
+                    <form action="/users/profile/update" method="POST">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="lastName" class="form-label">Họ</label>
+                                <input type="text" class="form-control" id="lastName" name="lastName" 
+                                       value="<%= user.lastName %>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="firstName" class="form-label">Tên</label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" 
+                                       value="<%= user.firstName %>" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="<%= user.email %>" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Số điện thoại</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="<%= user.phone %>" required>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Lưu thay đổi
+                            </button>
+                            <a href="/users/profile" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %> 

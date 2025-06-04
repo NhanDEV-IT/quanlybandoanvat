@@ -1,0 +1,115 @@
+<%- include('../../partials/header') %>
+
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title mb-4">
+                <%= user ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới' %>
+            </h2>
+
+            <form action="<%= user && user._id ? `/admin/users/${user._id}` : '/admin/users' %>" 
+                  method="POST" 
+                  class="needs-validation" 
+                  novalidate>
+                
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <% if (user && user._id) { %>
+                    <input type="hidden" name="_method" value="PUT">
+                <% } %>
+
+                <div class="mb-3">
+                    <label for="username" class="form-label">Tên người dùng</label>
+                    <input type="text" 
+                           class="form-control <%= errors.username ? 'is-invalid' : '' %>" 
+                           id="username" 
+                           name="username" 
+                           value="<%= user ? user.username : '' %>"
+                           required>
+                    <% if (errors.username) { %>
+                        <div class="invalid-feedback">
+                            <%= errors.username %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" 
+                           class="form-control <%= errors.email ? 'is-invalid' : '' %>" 
+                           id="email" 
+                           name="email" 
+                           value="<%= user ? user.email : '' %>"
+                           required>
+                    <% if (errors.email) { %>
+                        <div class="invalid-feedback">
+                            <%= errors.email %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">
+                        <%= user ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu' %>
+                    </label>
+                    <input type="password" 
+                           class="form-control <%= errors.password ? 'is-invalid' : '' %>" 
+                           id="password" 
+                           name="password"
+                           <%= user ? '' : 'required' %>>
+                    <% if (errors.password) { %>
+                        <div class="invalid-feedback">
+                            <%= errors.password %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="mb-3">
+                    <label for="role" class="form-label">Vai trò</label>
+                    <select class="form-select <%= errors.role ? 'is-invalid' : '' %>" 
+                            id="role" 
+                            name="role" 
+                            required>
+                        <option value="">Chọn vai trò</option>
+                        <% roles.forEach(role => { %>
+                            <option value="<%= role %>" 
+                                    <%= user && user.role === role ? 'selected' : '' %>>
+                                <%= role === 'admin' ? 'Quản trị viên' : 'Người dùng' %>
+                            </option>
+                        <% }); %>
+                    </select>
+                    <% if (errors.role) { %>
+                        <div class="invalid-feedback">
+                            <%= errors.role %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <%= user ? 'Cập nhật' : 'Thêm mới' %>
+                    </button>
+                    <a href="/admin/users" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+});
+</script>
+
+<%- include('../../partials/footer') %> 
